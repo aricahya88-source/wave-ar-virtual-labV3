@@ -848,3 +848,25 @@ input[type="range"] {
     flex: 1 1 auto;
   }
 }
+
+.xr-dom-overlay-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.xr-dom-overlay-root .ar-variable-hud {
+  pointer-events: auto;
+}
+
+.xr-dom-overlay-root:xr-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+.xr-dom-overlay-root:xr-overlay .ar-variable-hud {
+  pointer-events: auto;
+}
