@@ -18,10 +18,10 @@ type MediaPipeGestureControllerProps = {
   onGesture: (gesture: GestureName) => void;
 };
 
-const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
 
 const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
+  "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task";
 
 const SWIPE_THRESHOLD = 0.12;
 const TWO_HANDS_ZOOM_THRESHOLD = 0.07;
@@ -102,7 +102,41 @@ export function MediaPipeGestureController({
   useEffect(() => {
     onGestureRef.current = onGesture;
   }, [onGesture]);
+function getReadableGestureError(error: unknown) {
+  if (error instanceof DOMException) {
+    if (error.name === "NotAllowedError") {
+      return "Izin kamera ditolak. Buka pengaturan browser, izinkan kamera, lalu coba lagi.";
+    }
 
+    if (error.name === "NotFoundError") {
+      return "Kamera tidak ditemukan. Pastikan perangkat memiliki kamera dan tidak sedang dipakai aplikasi lain.";
+    }
+
+    if (error.name === "NotReadableError") {
+      return "Kamera sedang dipakai aplikasi lain atau terkunci oleh mode AR. Tutup aplikasi kamera lain, lalu coba lagi.";
+    }
+
+    if (error.name === "OverconstrainedError") {
+      return "Kamera tidak cocok dengan pengaturan yang diminta. Sistem akan mencoba kamera default.";
+    }
+
+    if (error.name === "SecurityError") {
+      return "Akses kamera membutuhkan HTTPS atau localhost.";
+    }
+
+    return `${error.name}: ${error.message}`;
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
   function emitGesture(gesture: GestureName) {
     const now = Date.now();
     const lastActionAt = lastActionAtRef.current[gesture] ?? 0;
@@ -226,14 +260,25 @@ export function MediaPipeGestureController({
         numHands: 2
       });
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        },
-        audio: false
-      });
+      let stream: MediaStream;
+
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        });
+      } catch (cameraError) {
+        console.warn("Kamera belakang gagal, mencoba kamera default:", cameraError);
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      }
 
       const video = videoRef.current;
 
@@ -263,17 +308,9 @@ export function MediaPipeGestureController({
     } catch (error) {
       console.error("Gagal mengaktifkan MediaPipe:", error);
 
-      if (error instanceof DOMException && error.name === "NotAllowedError") {
-        setStatusText("Izin kamera ditolak. Izinkan kamera lalu coba lagi.");
-        return;
-      }
+      const readableError = getReadableGestureError(error);
 
-      if (error instanceof Error) {
-        setStatusText(`Gesture gagal aktif: ${error.message}`);
-        return;
-      }
-
-      setStatusText("Gesture gagal aktif. Periksa browser, kamera, dan koneksi internet.");
+      setStatusText(`Gesture gagal aktif: ${readableError}`);
     }
   }
 
