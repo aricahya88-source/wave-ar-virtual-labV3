@@ -14,6 +14,23 @@ type Point3D = {
   z: number;
 };
 
+type MediaPipeGestureControllerProps = {
+  onGesture: (gesture: GestureName) => void;
+};
+
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+
+const MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
+
+const SWIPE_THRESHOLD = 0.12;
+const TWO_HANDS_ZOOM_THRESHOLD = 0.07;
+const PINCH_THRESHOLD = 0.055;
+
+const DEFAULT_COOLDOWN_MS = 850;
+const OPEN_PALM_COOLDOWN_MS = 1800;
+const ZOOM_COOLDOWN_MS = 700;
+
 function distance(a: Landmark | Point3D, b: Landmark | Point3D) {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
@@ -45,8 +62,15 @@ function getHandCenter(hand: Landmark[]): Point3D {
 
 function getCooldown(gesture: GestureName) {
   if (gesture === "open_palm") return OPEN_PALM_COOLDOWN_MS;
-  if (gesture === "two_hands_apart" || gesture === "two_hands_close") return ZOOM_COOLDOWN_MS;
-  if (gesture === "zoom_in" || gesture === "zoom_out") return ZOOM_COOLDOWN_MS;
+
+  if (
+    gesture === "two_hands_apart" ||
+    gesture === "two_hands_close" ||
+    gesture === "zoom_in" ||
+    gesture === "zoom_out"
+  ) {
+    return ZOOM_COOLDOWN_MS;
+  }
 
   return DEFAULT_COOLDOWN_MS;
 }
@@ -58,7 +82,9 @@ function mapBuiltInGesture(categoryName: string): GestureName | null {
   return null;
 }
 
-export function MediaPipeGestureController({ onGesture }: MediaPipeGestureControllerProps) {
+export function MediaPipeGestureController({
+  onGesture
+}: MediaPipeGestureControllerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const recognizerRef = useRef<GestureRecognizer | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -66,7 +92,7 @@ export function MediaPipeGestureController({ onGesture }: MediaPipeGestureContro
 
   const onGestureRef = useRef(onGesture);
   const lastActionAtRef = useRef<Partial<Record<GestureName, number>>>({});
-  const previousHandCenterRef = useRef<Landmark | null>(null);
+  const previousHandCenterRef = useRef<Point3D | null>(null);
   const previousTwoHandsDistanceRef = useRef<number | null>(null);
 
   const [isRunning, setIsRunning] = useState(false);
@@ -290,7 +316,13 @@ export function MediaPipeGestureController({ onGesture }: MediaPipeGestureContro
         <span>{isRunning ? "Aktif" : "Nonaktif"}</span>
       </div>
 
-      <video ref={videoRef} className="mediapipe-gesture-video" autoPlay muted playsInline />
+      <video
+        ref={videoRef}
+        className="mediapipe-gesture-video"
+        autoPlay
+        muted
+        playsInline
+      />
 
       <p className="mediapipe-gesture-status">{statusText}</p>
 
@@ -299,7 +331,10 @@ export function MediaPipeGestureController({ onGesture }: MediaPipeGestureContro
       </p>
 
       <div className="mediapipe-gesture-actions">
-        <button type="button" onClick={isRunning ? stopCameraGesture : startCameraGesture}>
+        <button
+          type="button"
+          onClick={isRunning ? stopCameraGesture : startCameraGesture}
+        >
           {isRunning ? "Matikan Gesture" : "Aktifkan Gesture"}
         </button>
       </div>
