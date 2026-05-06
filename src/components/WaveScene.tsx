@@ -139,10 +139,18 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(function Wa
   useImperativeHandle(ref, () => ({ startAR }), [startAR]);
 
   return (
-    <section className="scene-shell">
-      <canvas ref={canvasRef} className="wave-canvas" aria-label="Area simulasi gelombang cahaya" />
+  <section className="scene-shell">
+    <canvas ref={canvasRef} className="wave-canvas" aria-label="Area simulasi gelombang cahaya" />
+
+    <div id="ar-dom-overlay" className="xr-dom-overlay-root">
       {children}
-      <div className="scene-status">{xrMessage} Render dibuat stabil: objek hanya diperbarui saat parameter berubah.</div>
-    </section>
-  );
+    </div>
+
+    <div className="scene-status">
+      {xrMessage} Render dibuat stabil: objek hanya diperbarui saat parameter berubah.
+    </div>
+  </section>
+);
 });
+
+
