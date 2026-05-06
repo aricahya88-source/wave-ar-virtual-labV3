@@ -901,3 +901,113 @@ input[type="range"] {
   line-height: 1.4;
   backdrop-filter: blur(10px);
 }
+
+.mediapipe-gesture-controller {
+  position: absolute;
+  right: 18px;
+  bottom: 86px;
+  z-index: 30;
+  width: min(280px, calc(100vw - 36px));
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #e5e7eb;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(14px);
+  pointer-events: auto;
+}
+
+.mediapipe-gesture-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.mediapipe-gesture-header span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.15);
+  color: #bbf7d0;
+  font-size: 11px;
+}
+
+.mediapipe-gesture-video {
+  width: 100%;
+  height: 92px;
+  display: block;
+  object-fit: cover;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.9);
+  transform: scaleX(-1);
+}
+
+.mediapipe-gesture-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+
+.mediapipe-gesture-last {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #e2e8f0;
+}
+
+.mediapipe-gesture-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mediapipe-gesture-actions button {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  border-radius: 12px;
+  background: #38bdf8;
+  color: #082f49;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mediapipe-gesture-actions button:hover {
+  filter: brightness(1.05);
+}
+
+.mediapipe-gesture-help {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: #bae6fd;
+}
+
+.xr-dom-overlay-root:xr-overlay .mediapipe-gesture-controller {
+  position: fixed;
+  right: 14px;
+  bottom: 82px;
+  z-index: 9999;
+  pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  .mediapipe-gesture-controller {
+    right: 12px;
+    bottom: 76px;
+    width: min(240px, calc(100vw - 24px));
+    padding: 10px;
+  }
+
+  .mediapipe-gesture-video {
+    height: 72px;
+  }
+
+  .mediapipe-gesture-help {
+    display: none;
+  }
+}
