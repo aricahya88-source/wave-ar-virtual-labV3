@@ -8,24 +8,13 @@ type Landmark = {
   z?: number;
 };
 
-type MediaPipeGestureControllerProps = {
-  onGesture: (gesture: GestureName) => void;
+type Point3D = {
+  x: number;
+  y: number;
+  z: number;
 };
 
-const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
-
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
-
-const SWIPE_THRESHOLD = 0.12;
-const TWO_HANDS_ZOOM_THRESHOLD = 0.07;
-const PINCH_THRESHOLD = 0.055;
-
-const DEFAULT_COOLDOWN_MS = 850;
-const OPEN_PALM_COOLDOWN_MS = 1800;
-const ZOOM_COOLDOWN_MS = 700;
-
-function distance(a: Landmark, b: Landmark) {
+function distance(a: Landmark | Point3D, b: Landmark | Point3D) {
   const dx = a.x - b.x;
   const dy = a.y - b.y;
   const dz = (a.z ?? 0) - (b.z ?? 0);
@@ -33,13 +22,14 @@ function distance(a: Landmark, b: Landmark) {
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-function getHandCenter(hand: Landmark[]) {
-  const total = hand.reduce(
+function getHandCenter(hand: Landmark[]): Point3D {
+  const total = hand.reduce<Point3D>(
     (acc, point) => {
-      acc.x += point.x;
-      acc.y += point.y;
-      acc.z += point.z ?? 0;
-      return acc;
+      return {
+        x: acc.x + point.x,
+        y: acc.y + point.y,
+        z: acc.z + (point.z ?? 0)
+      };
     },
     { x: 0, y: 0, z: 0 }
   );
