@@ -8,6 +8,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { WebXRDefaultExperience } from "@babylonjs/core/XR/webXRDefaultExperience";
 import type { LabId, LabParameters } from "../types/lab";
 import { createSimulationVisuals } from "../engine/createSimulationVisuals";
+import { WebXRDomOverlay } from "@babylonjs/core/XR/features/WebXRDomOverlay";
 
 type WaveSceneProps = {
   labId: LabId;
