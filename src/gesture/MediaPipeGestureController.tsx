@@ -264,13 +264,13 @@ function getReadableGestureError(error: unknown) {
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          },
-          audio: false
-        });
+  video: {
+    facingMode: { ideal: "user" },
+    width: { ideal: 640 },
+    height: { ideal: 480 }
+  },
+  audio: false
+});
       } catch (cameraError) {
         console.warn("Kamera belakang gagal, mencoba kamera default:", cameraError);
 
