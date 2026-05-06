@@ -143,22 +143,23 @@ export function SimulationView({ lab }: SimulationViewProps) {
 
         <WaveScene ref={waveSceneRef} labId={lab.id} parameters={parameters} zoomScale={zoomScale}>
           <ARVariableHUD
-            activeLabId={lab.id}
-            parameters={parameters}
-            activeIndex={safeActiveIndex}
-            zoomScale={zoomScale}
-            isVisible={isHudVisible}
-            onToggleVisible={() => setIsHudVisible((current) => !current)}
-            onSelectNext={selectNextGestureParameter}
-            onSelectPrevious={selectPreviousGestureParameter}
-            onIncreaseActive={() => changeActiveGestureParameter(1)}
-            onDecreaseActive={() => changeActiveGestureParameter(-1)}
-            onZoomIn={zoomIn}
-            onZoomOut={zoomOut}
-            onResetZoom={() => setZoomScale(DEFAULT_AR_ZOOM)}
-          />
-
-          <MediaPipeGestureController onGesture={handleMediaPipeGesture} />
+  activeLabId={lab.id}
+  parameters={parameters}
+  activeIndex={safeActiveIndex}
+  zoomScale={zoomScale}
+  isVisible={isHudVisible}
+  gestureSlot={
+    <MediaPipeGestureController onGesture={handleMediaPipeGesture} />
+  }
+  onToggleVisible={() => setIsHudVisible((current) => !current)}
+  onSelectNext={selectNextGestureParameter}
+  onSelectPrevious={selectPreviousGestureParameter}
+  onIncreaseActive={() => changeActiveGestureParameter(1)}
+  onDecreaseActive={() => changeActiveGestureParameter(-1)}
+  onZoomIn={zoomIn}
+  onZoomOut={zoomOut}
+  onResetZoom={() => setZoomScale(DEFAULT_AR_ZOOM)}
+/>
         </WaveScene>
       </div>
 
