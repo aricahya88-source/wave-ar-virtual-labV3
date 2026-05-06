@@ -852,8 +852,9 @@ input[type="range"] {
 .xr-dom-overlay-root {
   position: absolute;
   inset: 0;
+  z-index: 20;
   pointer-events: none;
-  z-index: 5;
+  background: transparent;
 }
 
 .xr-dom-overlay-root .ar-variable-hud {
@@ -863,10 +864,40 @@ input[type="range"] {
 .xr-dom-overlay-root:xr-overlay {
   position: fixed;
   inset: 0;
+  z-index: 9999;
   pointer-events: none;
   background: transparent;
 }
 
 .xr-dom-overlay-root:xr-overlay .ar-variable-hud {
   pointer-events: auto;
+}
+
+.scene-shell {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.wave-canvas {
+  width: 100%;
+  min-height: 520px;
+  display: block;
+  border-radius: 24px;
+}
+
+.scene-status {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 15;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.78);
+  color: #e5e7eb;
+  font-size: 13px;
+  line-height: 1.4;
+  backdrop-filter: blur(10px);
 }
