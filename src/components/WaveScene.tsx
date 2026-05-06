@@ -14,7 +14,6 @@ import { HemisphericLight } from "@babylonjs/core/Lights/hemisphericLight";
 import { Scene } from "@babylonjs/core/scene";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { WebXRDefaultExperience } from "@babylonjs/core/XR/webXRDefaultExperience";
-import { WebXRDomOverlay } from "@babylonjs/core/XR/features/WebXRDomOverlay";
 import type { LabId, LabParameters } from "../types/lab";
 import { createSimulationVisuals } from "../engine/createSimulationVisuals";
 
@@ -59,7 +58,6 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
     const engineRef = useRef<Engine | null>(null);
     const sceneRef = useRef<Scene | null>(null);
     const xrRef = useRef<WebXRDefaultExperience | null>(null);
-    const domOverlayEnabledRef = useRef(false);
 
     const [xrMessage, setXrMessage] = useState(
       "Mode AR siap dicoba jika perangkat mendukung WebXR."
@@ -123,7 +121,6 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
         sceneRef.current = null;
         engineRef.current = null;
         xrRef.current = null;
-        domOverlayEnabledRef.current = false;
       };
     }, []);
 
@@ -186,31 +183,22 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
 
         const overlayElement = document.getElementById("ar-dom-overlay");
 
-        if (overlayElement && !domOverlayEnabledRef.current) {
-          try {
-            xrRef.current.baseExperience.featuresManager.enableFeature(
-              WebXRDomOverlay.Name,
-              "latest",
-              {
-                element: overlayElement
-              },
-              undefined,
-              false
-            );
-
-            domOverlayEnabledRef.current = true;
-          } catch (overlayError) {
-            console.warn("DOM Overlay tidak aktif di perangkat ini:", overlayError);
-            setXrMessage(
-              "Mode AR aktif, tetapi menu parameter mungkin tidak muncul karena DOM Overlay belum didukung perangkat ini."
-            );
-          }
-        }
+        const xrSessionOptions = overlayElement
+          ? ({
+              optionalFeatures: ["dom-overlay"],
+              domOverlay: {
+                root: overlayElement
+              }
+            } as any)
+          : ({
+              optionalFeatures: []
+            } as any);
 
         await xrRef.current.baseExperience.enterXRAsync(
           "immersive-ar",
           "local",
-          xrRef.current.renderTarget
+          xrRef.current.renderTarget,
+          xrSessionOptions
         );
 
         setXrMessage("Mode AR aktif. Arahkan kamera ke permukaan datar.");
