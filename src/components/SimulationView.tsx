@@ -148,9 +148,6 @@ export function SimulationView({ lab }: SimulationViewProps) {
   activeIndex={safeActiveIndex}
   zoomScale={zoomScale}
   isVisible={isHudVisible}
-  gestureSlot={
-    <MediaPipeGestureController onGesture={handleMediaPipeGesture} />
-  }
   onToggleVisible={() => setIsHudVisible((current) => !current)}
   onSelectNext={selectNextGestureParameter}
   onSelectPrevious={selectPreviousGestureParameter}
@@ -164,13 +161,16 @@ export function SimulationView({ lab }: SimulationViewProps) {
       </div>
 
       <div className="simulation-sidebar">
-        <ParameterPanel
-          activeLabId={lab.id}
-          parameters={parameters}
-          onChange={changeParameters}
-          onReset={resetSimulation}
-          onStartAR={() => void waveSceneRef.current?.startAR()}
-        />
+<ParameterPanel
+  activeLabId={lab.id}
+  parameters={parameters}
+  onChange={changeParameters}
+  onReset={resetSimulation}
+  onStartAR={() => void waveSceneRef.current?.startAR()}
+  gesturePanel={
+    <MediaPipeGestureController onGesture={handleMediaPipeGesture} />
+  }
+/>
       </div>
     </section>
   );
