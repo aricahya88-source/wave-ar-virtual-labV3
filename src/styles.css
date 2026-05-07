@@ -849,6 +849,7 @@ input[type="range"] {
   }
 }
 
+/* ===== AR DOM Overlay dan Gesture Kamera di dalam Panel Gesture AR ===== */
 .xr-dom-overlay-root {
   position: absolute;
   inset: 0;
@@ -873,143 +874,8 @@ input[type="range"] {
   pointer-events: auto;
 }
 
-.scene-shell {
-  position: relative;
-  width: 100%;
-  min-height: 520px;
-  overflow: hidden;
-}
-
-.wave-canvas {
-  width: 100%;
-  min-height: 520px;
-  display: block;
-  border-radius: 24px;
-}
-
-.scene-status {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  z-index: 15;
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: rgba(2, 6, 23, 0.78);
-  color: #e5e7eb;
-  font-size: 13px;
-  line-height: 1.4;
-  backdrop-filter: blur(10px);
-}
-
-.mediapipe-gesture-controller {
-  position: absolute;
-  right: 18px;
-  bottom: 86px;
+.ar-variable-hud {
   z-index: 30;
-  width: min(280px, calc(100vw - 36px));
-  padding: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 18px;
-  background: rgba(15, 23, 42, 0.82);
-  color: #e5e7eb;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.35);
-  backdrop-filter: blur(14px);
-  pointer-events: auto;
-}
-
-.mediapipe-gesture-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-
-.mediapipe-gesture-header span {
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.15);
-  color: #bbf7d0;
-  font-size: 11px;
-}
-
-.mediapipe-gesture-video {
-  width: 100%;
-  height: 92px;
-  display: block;
-  object-fit: cover;
-  border-radius: 14px;
-  background: rgba(2, 6, 23, 0.9);
-  transform: scaleX(-1);
-}
-
-.mediapipe-gesture-status {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.35;
-  color: #cbd5e1;
-}
-
-.mediapipe-gesture-last {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #e2e8f0;
-}
-
-.mediapipe-gesture-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.mediapipe-gesture-actions button {
-  width: 100%;
-  min-height: 34px;
-  border: 0;
-  border-radius: 12px;
-  background: #38bdf8;
-  color: #082f49;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.mediapipe-gesture-actions button:hover {
-  filter: brightness(1.05);
-}
-
-.mediapipe-gesture-help {
-  display: grid;
-  gap: 4px;
-  margin-top: 10px;
-  font-size: 11px;
-  color: #bae6fd;
-}
-
-.xr-dom-overlay-root:xr-overlay .mediapipe-gesture-controller {
-  position: fixed;
-  right: 14px;
-  bottom: 82px;
-  z-index: 9999;
-  pointer-events: auto;
-}
-
-@media (max-width: 720px) {
-  .mediapipe-gesture-controller {
-    right: 12px;
-    bottom: 76px;
-    width: min(240px, calc(100vw - 24px));
-    padding: 10px;
-  }
-
-  .mediapipe-gesture-video {
-    height: 72px;
-  }
-
-  .mediapipe-gesture-help {
-    display: none;
-  }
 }
 
 .ar-hud-gesture-slot {
@@ -1017,7 +883,7 @@ input[type="range"] {
   margin: 0 0 10px;
   padding: 8px;
   border-radius: 14px;
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(15, 23, 42, 0.56);
   border: 1px solid rgba(148, 163, 184, 0.22);
 }
 
@@ -1030,40 +896,74 @@ input[type="range"] {
   background: transparent;
   box-shadow: none;
   backdrop-filter: none;
+  pointer-events: auto;
+  color: #fff8df;
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.ar-hud-gesture-slot .mediapipe-gesture-header strong {
+  font-size: 13px;
+}
+
+.ar-hud-gesture-slot .mediapipe-gesture-header span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(34, 197, 94, 0.18);
+  color: #bbf7d0;
+  font-size: 11px;
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-video {
   width: 100%;
-  height: 86px;
-  border-radius: 12px;
+  height: 74px;
+  display: block;
   object-fit: cover;
+  border-radius: 12px;
   background: rgba(2, 6, 23, 0.9);
   transform: scaleX(-1);
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-status {
-  margin-top: 6px;
+  margin: 6px 0 0;
   font-size: 11px;
-  line-height: 1.3;
+  line-height: 1.25;
+  color: rgba(255, 248, 223, 0.82);
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-last {
-  margin-top: 4px;
+  margin: 4px 0 0;
   font-size: 11px;
+  color: rgba(255, 248, 223, 0.9);
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-actions {
+  display: flex;
+  gap: 8px;
   margin-top: 8px;
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-actions button {
+  width: 100%;
   min-height: 30px;
+  border: 0;
   border-radius: 10px;
+  background: #38bdf8;
+  color: #082f49;
   font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ar-hud-gesture-slot .mediapipe-gesture-actions button:hover {
+  filter: brightness(1.05);
 }
 
 .ar-hud-gesture-slot .mediapipe-gesture-help {
@@ -1074,4 +974,97 @@ input[type="range"] {
   position: static;
   width: 100%;
   pointer-events: auto;
+}
+
+@media (max-width: 720px) {
+  .ar-hud-gesture-slot {
+    padding: 7px;
+  }
+
+  .ar-hud-gesture-slot .mediapipe-gesture-video {
+    height: 64px;
+  }
+}
+
+/* ===== Tombol Fullscreen Simulasi ===== */
+.scene-fullscreen-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 70;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 9px 13px;
+  border: 1px solid rgba(255, 214, 90, 0.28);
+  border-radius: 999px;
+  color: #fff8df;
+  background: rgba(10, 14, 10, 0.72);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.scene-fullscreen-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 214, 90, 0.18);
+}
+
+.scene-fullscreen-button:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, 0.65);
+  outline-offset: 3px;
+}
+
+.scene-shell:fullscreen,
+.scene-shell.is-fullscreen,
+.scene-shell:-webkit-full-screen {
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  border: 0;
+  border-radius: 0;
+  background: #020617;
+}
+
+.scene-shell:fullscreen .wave-canvas,
+.scene-shell.is-fullscreen .wave-canvas,
+.scene-shell:-webkit-full-screen .wave-canvas {
+  width: 100vw;
+  height: 100vh;
+}
+
+.scene-shell:fullscreen .ar-variable-hud,
+.scene-shell.is-fullscreen .ar-variable-hud,
+.scene-shell:-webkit-full-screen .ar-variable-hud {
+  max-height: calc(100vh - 118px);
+}
+
+.scene-shell:fullscreen .scene-status,
+.scene-shell.is-fullscreen .scene-status,
+.scene-shell:-webkit-full-screen .scene-status {
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 65;
+}
+
+@media (max-width: 720px) {
+  .scene-fullscreen-button {
+    top: 12px;
+    right: 12px;
+    min-height: 34px;
+    padding: 8px 11px;
+    font-size: 0.76rem;
+  }
+
+  .scene-shell:fullscreen .ar-variable-hud,
+  .scene-shell.is-fullscreen .ar-variable-hud,
+  .scene-shell:-webkit-full-screen .ar-variable-hud {
+    top: 56px;
+    max-height: calc(100vh - 126px);
+  }
 }
