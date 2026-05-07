@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LabId, LabParameters } from "../types/lab";
 import { ParameterSlider } from "./ParameterSlider";
 import {
@@ -19,9 +20,10 @@ import {
 type ParameterPanelProps = {
   activeLabId: LabId;
   parameters: LabParameters;
-  onChange: (next: Partial<LabParameters>) => void;
+  onChange: (parameters: Partial<LabParameters>) => void;
   onReset: () => void;
   onStartAR: () => void;
+  gesturePanel?: ReactNode;
 };
 
 function fmt(value: number, digits = 2) {
@@ -92,7 +94,14 @@ function TheoryResult({ activeLabId, parameters }: { activeLabId: LabId; paramet
   );
 }
 
-export function ParameterPanel({ activeLabId, parameters, onChange, onReset, onStartAR }: ParameterPanelProps) {
+export function ParameterPanel({
+  activeLabId,
+  parameters,
+  onChange,
+  onReset,
+  onStartAR,
+  gesturePanel
+}: ParameterPanelProps) {
   const isOpticalSlitLab = activeLabId === "interference" || activeLabId === "diffraction";
   const currentLaserColor = wavelengthToHex(parameters.wavelengthNm);
   const visibleColorName = getVisibleColorName(parameters.wavelengthNm);
@@ -100,6 +109,11 @@ export function ParameterPanel({ activeLabId, parameters, onChange, onReset, onS
   return (
     <section className="panel parameter-panel">
       <div className="panel-heading">
+        {gesturePanel ? (
+  <div className="parameter-gesture-slot">
+    {gesturePanel}
+  </div>
+) : null}
         <h3>Parameter Ukuran Nyata</h3>
         <button className="ghost-button" onClick={onReset}>Reset</button>
       </div>
