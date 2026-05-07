@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+
 import type { LabId, LabParameters } from "../types/lab";
 import { getVisibleColorName } from "../utils/visibleLight";
 
@@ -20,7 +20,6 @@ type ARVariableHUDProps = {
   activeIndex: number;
   zoomScale: number;
   isVisible: boolean;
-  gestureSlot?: ReactNode;
   onToggleVisible: () => void;
   onSelectNext: () => void;
   onSelectPrevious: () => void;
@@ -102,11 +101,7 @@ export function ARVariableHUD({
           <span>Panel Gesture AR</span>
           <strong>Zoom visual: {(zoomScale * 100).toFixed(0)}%</strong>
         </div>
-        {gestureSlot ? (
-  <div className="ar-hud-gesture-slot">
-    {gestureSlot}
-  </div>
-) : null}
+      
         <button type="button" className="hud-icon-button" onClick={onToggleVisible}>
           {isVisible ? "Sembunyikan" : "Tampilkan"}
         </button>
