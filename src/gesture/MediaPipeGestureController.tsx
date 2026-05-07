@@ -18,9 +18,13 @@ type MediaPipeGestureControllerProps = {
   onGesture: (gesture: GestureName) => void;
 };
 
+const CONTROLLER_VERSION = "v3.2";
+
 const WASM_URLS = [
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
+  "https://unpkg.com/@mediapipe/tasks-vision@0.10.35/wasm",
   "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm"
 ];
 
@@ -99,7 +103,7 @@ function getReadableGestureError(error: unknown) {
   if (typeof Event !== "undefined" && error instanceof Event) {
     const resource = getEventResource(error);
 
-    return `Resource MediaPipe gagal dimuat (${error.type}: ${resource}). Periksa koneksi internet, blokir CDN, atau coba refresh halaman.`;
+    return `Resource MediaPipe gagal dimuat. Detail: ${error.type}; ${resource}. Biasanya ini terjadi karena CDN/model/WASM diblokir, koneksi tidak stabil, atau cache browser masih memakai file lama.`;
   }
 
   if (error instanceof DOMException) {
@@ -116,7 +120,7 @@ function getReadableGestureError(error: unknown) {
     }
 
     if (error.name === "OverconstrainedError") {
-      return "Kamera tidak cocok dengan pengaturan yang diminta. Sistem akan mencoba kamera default.";
+      return "Kamera tidak cocok dengan pengaturan yang diminta. Sistem sudah mencoba kamera default.";
     }
 
     if (error.name === "SecurityError") {
@@ -134,20 +138,25 @@ function getReadableGestureError(error: unknown) {
     const json = JSON.stringify(error);
 
     if (json && json !== "{}") {
+      if (json.includes("isTrusted")) {
+        return "Browser mengirim Event error saat memuat resource MediaPipe. Ini biasanya berarti file WASM/model gagal dimuat dari CDN. Coba hard refresh, incognito, atau cek koneksi internet.";
+      }
+
       return json;
     }
   } catch {
-    // Abaikan, fallback ke String(error).
+    // Fallback ke String(error).
   }
 
   return String(error);
 }
 
-async function createVisionFileset() {
+async function createVisionFileset(onStatus: (message: string) => void) {
   const errors: string[] = [];
 
   for (const wasmUrl of WASM_URLS) {
     try {
+      onStatus(`Memuat WASM MediaPipe dari ${wasmUrl} ...`);
       return await FilesetResolver.forVisionTasks(wasmUrl);
     } catch (error) {
       const message = getReadableGestureError(error);
@@ -159,12 +168,14 @@ async function createVisionFileset() {
   throw new Error(`Semua URL WASM MediaPipe gagal dimuat. ${errors.join(" | ")}`);
 }
 
-async function createGestureRecognizer() {
-  const vision = await createVisionFileset();
+async function createGestureRecognizer(onStatus: (message: string) => void) {
+  const vision = await createVisionFileset(onStatus);
   const errors: string[] = [];
 
   for (const modelUrl of MODEL_URLS) {
     try {
+      onStatus(`Memuat model Gesture Recognizer ...`);
+
       return await GestureRecognizer.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath: modelUrl,
@@ -197,7 +208,7 @@ export function MediaPipeGestureController({
   const previousTwoHandsDistanceRef = useRef<number | null>(null);
 
   const [isRunning, setIsRunning] = useState(false);
-  const [statusText, setStatusText] = useState("Gesture kamera belum aktif.");
+  const [statusText, setStatusText] = useState(`Gesture kamera belum aktif. Controller ${CONTROLLER_VERSION}.`);
   const [lastGesture, setLastGesture] = useState<GestureName | "-">("-");
 
   useEffect(() => {
@@ -312,9 +323,32 @@ export function MediaPipeGestureController({
     animationFrameRef.current = window.requestAnimationFrame(startLoop);
   }
 
-  async function startCameraGesture() {
+  async function openSelfieCamera() {
     try {
-      setStatusText("Memuat MediaPipe dan meminta izin kamera selfie...");
+      return await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "user" },
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        },
+        audio: false
+      });
+    } catch (cameraError) {
+      console.warn("Kamera selfie gagal, mencoba kamera default:", cameraError);
+
+      return await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: false
+      });
+    }
+  }
+
+  async function startCameraGesture() {
+    let stream: MediaStream | null = null;
+    let recognizer: GestureRecognizer | null = null;
+
+    try {
+      setStatusText(`Memulai gesture kamera. Controller ${CONTROLLER_VERSION} ...`);
 
       if (!window.isSecureContext) {
         setStatusText("Gesture kamera membutuhkan HTTPS atau localhost.");
@@ -326,33 +360,13 @@ export function MediaPipeGestureController({
         return;
       }
 
-      const recognizer = await createGestureRecognizer();
-
-      let stream: MediaStream;
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "user" },
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-          },
-          audio: false
-        });
-      } catch (cameraError) {
-        console.warn("Kamera selfie gagal, mencoba kamera default:", cameraError);
-
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: false
-        });
-      }
+      setStatusText("Meminta izin kamera selfie...");
+      stream = await openSelfieCamera();
 
       const video = videoRef.current;
 
       if (!video) {
         stream.getTracks().forEach((track) => track.stop());
-        recognizer.close();
         setStatusText("Elemen video belum siap.");
         return;
       }
@@ -365,23 +379,39 @@ export function MediaPipeGestureController({
         await video.play();
       } catch (playError) {
         stream.getTracks().forEach((track) => track.stop());
-        recognizer.close();
         setStatusText(`Video kamera gagal diputar: ${getReadableGestureError(playError)}`);
         return;
       }
 
-      recognizerRef.current = recognizer;
       streamRef.current = stream;
+      setStatusText("Kamera aktif. Memuat model gesture MediaPipe...");
+
+      recognizer = await createGestureRecognizer(setStatusText);
+      recognizerRef.current = recognizer;
 
       previousHandCenterRef.current = null;
       previousTwoHandsDistanceRef.current = null;
 
       setIsRunning(true);
-      setStatusText("Gesture selfie aktif. Gerakkan tangan di depan kamera depan.");
+      setStatusText(`Gesture selfie aktif. Controller ${CONTROLLER_VERSION}. Gerakkan tangan di depan kamera depan.`);
 
       startLoop();
     } catch (error) {
       console.error("Gagal mengaktifkan MediaPipe:", error);
+
+      recognizer?.close();
+      recognizerRef.current = null;
+
+      stream?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.srcObject = null;
+      }
+
+      setIsRunning(false);
       setStatusText(`Gesture gagal aktif: ${getReadableGestureError(error)}`);
     }
   }
@@ -409,7 +439,7 @@ export function MediaPipeGestureController({
     }
 
     setIsRunning(false);
-    setStatusText("Gesture kamera dimatikan.");
+    setStatusText(`Gesture kamera dimatikan. Controller ${CONTROLLER_VERSION}.`);
   }
 
   useEffect(() => {
