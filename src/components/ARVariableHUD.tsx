@@ -80,7 +80,6 @@ export function ARVariableHUD({
   activeIndex,
   zoomScale,
   isVisible,
-  gestureSlot,
   onToggleVisible,
   onSelectNext,
   onSelectPrevious,
