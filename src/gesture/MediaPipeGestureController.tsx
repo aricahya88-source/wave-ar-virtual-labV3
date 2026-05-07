@@ -18,10 +18,16 @@ type MediaPipeGestureControllerProps = {
   onGesture: (gesture: GestureName) => void;
 };
 
-const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
+const WASM_URLS = [
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm",
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm",
+  "https://unpkg.com/@mediapipe/tasks-vision@0.10.22/wasm"
+];
 
-const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
+const MODEL_URLS = [
+  "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task",
+  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task"
+];
 
 const SWIPE_THRESHOLD = 0.12;
 const TWO_HANDS_ZOOM_THRESHOLD = 0.07;
@@ -82,7 +88,20 @@ function mapBuiltInGesture(categoryName: string): GestureName | null {
   return null;
 }
 
+function getEventResource(error: Event) {
+  const target = error.target as Partial<HTMLScriptElement & HTMLLinkElement & HTMLImageElement> | null;
+  const currentTarget = error.currentTarget as Partial<HTMLScriptElement & HTMLLinkElement & HTMLImageElement> | null;
+
+  return target?.src ?? currentTarget?.src ?? target?.href ?? currentTarget?.href ?? "resource tidak diketahui";
+}
+
 function getReadableGestureError(error: unknown) {
+  if (typeof Event !== "undefined" && error instanceof Event) {
+    const resource = getEventResource(error);
+
+    return `Resource MediaPipe gagal dimuat (${error.type}: ${resource}). Periksa koneksi internet, blokir CDN, atau coba refresh halaman.`;
+  }
+
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError") {
       return "Izin kamera ditolak. Buka pengaturan browser, izinkan kamera, lalu coba lagi.";
@@ -93,7 +112,7 @@ function getReadableGestureError(error: unknown) {
     }
 
     if (error.name === "NotReadableError") {
-      return "Kamera sedang dipakai aplikasi lain atau terkunci oleh mode AR. Tutup aplikasi kamera lain, lalu coba lagi.";
+      return "Kamera sedang dipakai aplikasi lain atau terkunci oleh mode AR. Tutup aplikasi kamera lain, matikan AR, lalu coba lagi.";
     }
 
     if (error.name === "OverconstrainedError") {
@@ -108,14 +127,60 @@ function getReadableGestureError(error: unknown) {
   }
 
   if (error instanceof Error) {
-    return error.message;
+    return error.message || "Terjadi error tanpa pesan detail.";
   }
 
   try {
-    return JSON.stringify(error);
+    const json = JSON.stringify(error);
+
+    if (json && json !== "{}") {
+      return json;
+    }
   } catch {
-    return String(error);
+    // Abaikan, fallback ke String(error).
   }
+
+  return String(error);
+}
+
+async function createVisionFileset() {
+  const errors: string[] = [];
+
+  for (const wasmUrl of WASM_URLS) {
+    try {
+      return await FilesetResolver.forVisionTasks(wasmUrl);
+    } catch (error) {
+      const message = getReadableGestureError(error);
+      errors.push(`${wasmUrl} => ${message}`);
+      console.warn("Gagal memuat WASM MediaPipe:", wasmUrl, error);
+    }
+  }
+
+  throw new Error(`Semua URL WASM MediaPipe gagal dimuat. ${errors.join(" | ")}`);
+}
+
+async function createGestureRecognizer() {
+  const vision = await createVisionFileset();
+  const errors: string[] = [];
+
+  for (const modelUrl of MODEL_URLS) {
+    try {
+      return await GestureRecognizer.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: modelUrl,
+          delegate: "CPU"
+        },
+        runningMode: "VIDEO",
+        numHands: 2
+      });
+    } catch (error) {
+      const message = getReadableGestureError(error);
+      errors.push(`${modelUrl} => ${message}`);
+      console.warn("Gagal memuat model Gesture Recognizer:", modelUrl, error);
+    }
+  }
+
+  throw new Error(`Semua URL model Gesture Recognizer gagal dimuat. ${errors.join(" | ")}`);
 }
 
 export function MediaPipeGestureController({
@@ -235,8 +300,13 @@ export function MediaPipeGestureController({
     if (!video || !recognizer) return;
 
     if (video.readyState >= 2) {
-      const result = recognizer.recognizeForVideo(video, performance.now());
-      analyzeResult(result);
+      try {
+        const result = recognizer.recognizeForVideo(video, performance.now());
+        analyzeResult(result);
+      } catch (error) {
+        console.error("Gagal membaca gesture dari frame video:", error);
+        setStatusText(`Gesture gagal membaca frame: ${getReadableGestureError(error)}`);
+      }
     }
 
     animationFrameRef.current = window.requestAnimationFrame(startLoop);
@@ -256,16 +326,7 @@ export function MediaPipeGestureController({
         return;
       }
 
-      const vision = await FilesetResolver.forVisionTasks(WASM_URL);
-
-      const recognizer = await GestureRecognizer.createFromOptions(vision, {
-        baseOptions: {
-          modelAssetPath: MODEL_URL,
-          delegate: "CPU"
-        },
-        runningMode: "VIDEO",
-        numHands: 2
-      });
+      const recognizer = await createGestureRecognizer();
 
       let stream: MediaStream;
 
@@ -300,7 +361,14 @@ export function MediaPipeGestureController({
       video.muted = true;
       video.playsInline = true;
 
-      await video.play();
+      try {
+        await video.play();
+      } catch (playError) {
+        stream.getTracks().forEach((track) => track.stop());
+        recognizer.close();
+        setStatusText(`Video kamera gagal diputar: ${getReadableGestureError(playError)}`);
+        return;
+      }
 
       recognizerRef.current = recognizer;
       streamRef.current = stream;
