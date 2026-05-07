@@ -20,6 +20,7 @@ type ARVariableHUDProps = {
   activeIndex: number;
   zoomScale: number;
   isVisible: boolean;
+  gestureSlot?: unknown;
   onToggleVisible: () => void;
   onSelectNext: () => void;
   onSelectPrevious: () => void;
