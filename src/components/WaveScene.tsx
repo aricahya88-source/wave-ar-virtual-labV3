@@ -54,6 +54,7 @@ function getReadableXRError(error: unknown) {
 
 export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
   function WaveScene({ labId, parameters, zoomScale, children }, ref) {
+    const shellRef = useRef<HTMLElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const engineRef = useRef<Engine | null>(null);
     const sceneRef = useRef<Scene | null>(null);
@@ -62,6 +63,7 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
     const [xrMessage, setXrMessage] = useState(
       "Mode AR siap dicoba jika perangkat mendukung WebXR."
     );
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     useEffect(() => {
       const canvas = canvasRef.current;
@@ -134,6 +136,83 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
       root.scaling.y = zoomScale;
       root.scaling.z = zoomScale;
     }, [labId, parameters, zoomScale]);
+
+
+    useEffect(() => {
+      const getFullscreenElement = () => {
+        const webkitDocument = document as Document & {
+          webkitFullscreenElement?: Element | null;
+        };
+
+        return document.fullscreenElement ?? webkitDocument.webkitFullscreenElement ?? null;
+      };
+
+      const handleFullscreenChange = () => {
+        setIsFullscreen(getFullscreenElement() === shellRef.current);
+
+        window.setTimeout(() => {
+          engineRef.current?.resize();
+        }, 80);
+      };
+
+      document.addEventListener("fullscreenchange", handleFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", handleFullscreenChange as EventListener);
+
+      return () => {
+        document.removeEventListener("fullscreenchange", handleFullscreenChange);
+        document.removeEventListener("webkitfullscreenchange", handleFullscreenChange as EventListener);
+      };
+    }, []);
+
+    const toggleFullscreen = useCallback(async () => {
+      const shell = shellRef.current;
+
+      if (!shell) {
+        setXrMessage("Area simulasi belum siap untuk mode fullscreen.");
+        return;
+      }
+
+      const webkitDocument = document as Document & {
+        webkitFullscreenElement?: Element | null;
+        webkitExitFullscreen?: () => Promise<void> | void;
+      };
+
+      const fullscreenElement =
+        document.fullscreenElement ?? webkitDocument.webkitFullscreenElement ?? null;
+
+      try {
+        if (fullscreenElement) {
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (webkitDocument.webkitExitFullscreen) {
+            await webkitDocument.webkitExitFullscreen();
+          }
+
+          return;
+        }
+
+        const webkitShell = shell as HTMLElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+        };
+
+        if (shell.requestFullscreen) {
+          await shell.requestFullscreen();
+        } else if (webkitShell.webkitRequestFullscreen) {
+          await webkitShell.webkitRequestFullscreen();
+        } else {
+          setXrMessage("Browser ini belum mendukung tombol fullscreen untuk area simulasi.");
+        }
+      } catch (error) {
+        console.error("Gagal mengaktifkan fullscreen:", error);
+
+        if (error instanceof Error) {
+          setXrMessage(`Fullscreen gagal aktif: ${error.message}`);
+          return;
+        }
+
+        setXrMessage("Fullscreen gagal aktif. Coba gunakan browser Chrome atau Edge terbaru.");
+      }
+    }, []);
 
     const startAR = useCallback(async () => {
       const scene = sceneRef.current;
@@ -211,7 +290,16 @@ export const WaveScene = forwardRef<WaveSceneHandle, WaveSceneProps>(
     useImperativeHandle(ref, () => ({ startAR }), [startAR]);
 
     return (
-      <section className="scene-shell">
+      <section ref={shellRef} className={`scene-shell${isFullscreen ? " is-fullscreen" : ""}`}>
+        <button
+          type="button"
+          className="scene-fullscreen-button"
+          onClick={toggleFullscreen}
+          aria-label={isFullscreen ? "Keluar dari fullscreen" : "Tampilkan simulasi fullscreen"}
+        >
+          {isFullscreen ? "Keluar Fullscreen" : "Fullscreen"}
+        </button>
+
         <canvas
           ref={canvasRef}
           className="wave-canvas"
