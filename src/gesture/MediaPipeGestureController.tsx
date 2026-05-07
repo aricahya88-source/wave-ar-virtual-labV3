@@ -18,10 +18,10 @@ type MediaPipeGestureControllerProps = {
   onGesture: (gesture: GestureName) => void;
 };
 
-const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const WASM_URL = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm";
 
 const MODEL_URL =
-  "https://storage.googleapis.com/mediapipe-tasks/gesture_recognizer/gesture_recognizer.task";
+  "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task";
 
 const SWIPE_THRESHOLD = 0.12;
 const TWO_HANDS_ZOOM_THRESHOLD = 0.07;
@@ -82,26 +82,6 @@ function mapBuiltInGesture(categoryName: string): GestureName | null {
   return null;
 }
 
-export function MediaPipeGestureController({
-  onGesture
-}: MediaPipeGestureControllerProps) {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const recognizerRef = useRef<GestureRecognizer | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-
-  const onGestureRef = useRef(onGesture);
-  const lastActionAtRef = useRef<Partial<Record<GestureName, number>>>({});
-  const previousHandCenterRef = useRef<Point3D | null>(null);
-  const previousTwoHandsDistanceRef = useRef<number | null>(null);
-
-  const [isRunning, setIsRunning] = useState(false);
-  const [statusText, setStatusText] = useState("Gesture kamera belum aktif.");
-  const [lastGesture, setLastGesture] = useState<GestureName | "-">("-");
-
-  useEffect(() => {
-    onGestureRef.current = onGesture;
-  }, [onGesture]);
 function getReadableGestureError(error: unknown) {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError") {
@@ -137,6 +117,28 @@ function getReadableGestureError(error: unknown) {
     return String(error);
   }
 }
+
+export function MediaPipeGestureController({
+  onGesture
+}: MediaPipeGestureControllerProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const recognizerRef = useRef<GestureRecognizer | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+
+  const onGestureRef = useRef(onGesture);
+  const lastActionAtRef = useRef<Partial<Record<GestureName, number>>>({});
+  const previousHandCenterRef = useRef<Point3D | null>(null);
+  const previousTwoHandsDistanceRef = useRef<number | null>(null);
+
+  const [isRunning, setIsRunning] = useState(false);
+  const [statusText, setStatusText] = useState("Gesture kamera belum aktif.");
+  const [lastGesture, setLastGesture] = useState<GestureName | "-">("-");
+
+  useEffect(() => {
+    onGestureRef.current = onGesture;
+  }, [onGesture]);
+
   function emitGesture(gesture: GestureName) {
     const now = Date.now();
     const lastActionAt = lastActionAtRef.current[gesture] ?? 0;
@@ -242,7 +244,12 @@ function getReadableGestureError(error: unknown) {
 
   async function startCameraGesture() {
     try {
-      setStatusText("Memuat MediaPipe dan meminta izin kamera...");
+      setStatusText("Memuat MediaPipe dan meminta izin kamera selfie...");
+
+      if (!window.isSecureContext) {
+        setStatusText("Gesture kamera membutuhkan HTTPS atau localhost.");
+        return;
+      }
 
       if (!navigator.mediaDevices?.getUserMedia) {
         setStatusText("Browser belum mendukung akses kamera.");
@@ -264,15 +271,15 @@ function getReadableGestureError(error: unknown) {
 
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-  video: {
-    facingMode: { ideal: "user" },
-    width: { ideal: 640 },
-    height: { ideal: 480 }
-  },
-  audio: false
-});
+          video: {
+            facingMode: { ideal: "user" },
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        });
       } catch (cameraError) {
-        console.warn("Kamera belakang gagal, mencoba kamera default:", cameraError);
+        console.warn("Kamera selfie gagal, mencoba kamera default:", cameraError);
 
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -302,15 +309,12 @@ function getReadableGestureError(error: unknown) {
       previousTwoHandsDistanceRef.current = null;
 
       setIsRunning(true);
-      setStatusText("Gesture kamera aktif. Gerakkan tangan di depan kamera.");
+      setStatusText("Gesture selfie aktif. Gerakkan tangan di depan kamera depan.");
 
       startLoop();
     } catch (error) {
       console.error("Gagal mengaktifkan MediaPipe:", error);
-
-      const readableError = getReadableGestureError(error);
-
-      setStatusText(`Gesture gagal aktif: ${readableError}`);
+      setStatusText(`Gesture gagal aktif: ${getReadableGestureError(error)}`);
     }
   }
 
