@@ -1068,3 +1068,69 @@ input[type="range"] {
     max-height: calc(100vh - 126px);
   }
 }
+
+.parameter-gesture-slot {
+  width: 100%;
+  margin: 0 0 16px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.25);
+}
+
+.parameter-gesture-slot .mediapipe-gesture-controller {
+  position: static !important;
+  width: 100% !important;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-header {
+  margin-bottom: 8px;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-video {
+  width: 100%;
+  height: 110px;
+  display: block;
+  object-fit: cover;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.9);
+  transform: scaleX(-1);
+}
+
+.parameter-gesture-slot .mediapipe-gesture-status {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-last {
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-actions {
+  margin-top: 10px;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-actions button {
+  width: 100%;
+  min-height: 34px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.parameter-gesture-slot .mediapipe-gesture-help {
+  display: none;
+}
+
+.ar-hud-gesture-slot {
+  display: none !important;
+}
